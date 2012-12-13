@@ -1,0 +1,158 @@
+<!-- !DOCTYPE html>
+<html lang="fr">
+    <head>
+        <script src="/socket.io/socket.io.js"></script>
+        // <script>
+            var socket = io.connect('http://localhost');
+            socket.emit('login', { pseudo: 'toto' });
+            socket.on('badpseudo', function (data) {
+                socket.emit('login', { pseudo: 'vincent' });
+            });
+        // </script>
+    </head>
+
+    <body>
+        <div id="content"></div>
+    </body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Node.js chat</title>
+
+        <style>
+        * { font-family:tahoma; font-size:12px; padding:0px; margin:0px; }
+        p { line-height:18px; }
+        #content { min-width:150px; width:80%; margin-left:10%; padding:5px; background:#ddd; border-radius:5px;
+                   border:1px solid #ccc; margin-top:10px; overflow:auto; margin-bottom: 50px; }
+        #inputs { min-width:150px; width:80%; margin-left:10%; position:fixed !important; bottom:0; padding-bottom:5px; }
+        .input { border-radius:2px; border:1px solid #ccc;
+                 margin-top:10px; padding:5px; }
+        .content { border:1px solid #ddd; background:#eee; padding:5px; min-height:30px; }
+        #message, .message { width:75%; float:right; }
+        #nickname, .nickname, .time { width:17%; float:left; }
+        .time { color:#bbb }
+        #nickname, #message { margin-left:7px; }
+        .text#nickname { margin-top:10px; padding:5px; width:15%; }
+        .text#nickname, .nickname { font-weight:bold; }
+        .connection { padding:5px; min-height:15px; }
+        </style>
+        
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://localhost');
+            
+            socket.on('newUser', function (data) {
+                createContent(1, data);
+            });
+            socket.on('receiveMessage', function (data) {
+                createContent(2, data);
+            });
+            
+            var previousMessages = new Array();
+            var idMessage = 0;
+          
+            if (window.addEventListener) {
+                window.addEventListener('load', onLoad, false);
+            }
+
+            function onLoad() {
+                document.getElementById('nickname').addEventListener('keydown', function(e) {
+                    if (e.keyCode == 13 && this.value.length > 0 && this.value.length <= 15) {
+                        socket.emit('saveNickname', (this.value).replace(/[<>]/g,''));
+                        socket.nickname = (this.value).replace(/[<>]/g,'');
+                        replaceNickname(socket.nickname);
+                        document.getElementById('message').removeAttribute('disabled');
+                        document.getElementById('message').focus();
+                    }
+                }, false);
+                
+                document.getElementById('message').addEventListener('keydown', function(e) {
+                    console.log(e.keyCode);
+                    if (e.keyCode == 13 && this.value.length > 0) {
+                        previousMessages.push(this.value);
+                        socket.emit('sendMessage', (this.value).replace(/[<>]/g,''));
+                        this.value = '';
+                    }
+                    else if (e.keyCode == 38) {
+                        if (previousMessages.length - idMessage != 0) {
+                            this.value = previousMessages[previousMessages.length - 1 - idMessage++];
+                        }
+                        return;
+                    }
+                    else if (e.keyCode == 40) {
+                        this.value = (idMessage == 0) ? '' : previousMessages[previousMessages.length - idMessage--];
+                        return;
+                    }
+                    idMessage = 0;
+                }, false);
+            }
+            
+            function replaceNickname(txt) {
+                document.getElementById('inputs').removeChild(document.getElementById('nickname'));
+                var nickname = document.createElement('span');
+                nickname.innerHTML = txt;
+                nickname.setAttribute('id', 'nickname');
+                nickname.setAttribute('class', 'text');
+                document.getElementById('inputs').appendChild(nickname);
+            }
+            
+            function createContent(type, data) {
+                console.log(data);
+            
+                var content = document.createElement('div');
+                var nickname = document.createElement('span');
+                var message = document.createElement('span');
+                var time = document.createElement('span');
+                
+                var date = new Date(data.time);
+                var formattedTime = (date.getHours().toString().length == 1 ? '0' + date.getHours().toString() : date.getHours().toString()) 
+                    + ':' + (date.getMinutes().toString().length == 1 ? '0' + date.getMinutes().toString() : date.getMinutes().toString()) 
+                    + ':' + (date.getSeconds().toString().length == 1 ? '0' + date.getSeconds().toString() : date.getSeconds().toString());
+            
+                if (type == 1) {
+                    content.setAttribute('id', 'content' + data.time);
+                    content.setAttribute('class', 'connection');
+                    time.setAttribute('id', 'time' + data.time);
+                    time.setAttribute('class', 'time');
+                    time.innerHTML = formattedTime;
+                    message.setAttribute('id', 'message' + data.time);
+                    message.setAttribute('class', 'message');
+                    message.innerHTML = '<b>' + (data.nickname).replace(/[<>]/g,''); + '</b> vient de se connecter';
+                }
+                else if (type == 2) {
+                    content.setAttribute('id', 'content' + data.time);
+                    content.setAttribute('class', 'content');
+                    nickname.setAttribute('id', 'nickname' + data.time);
+                    nickname.setAttribute('class', 'nickname');
+                    nickname.innerHTML = (data.nickname).replace(/[<>]/g,'');
+                    message.setAttribute('id', 'message' + data.time);
+                    message.setAttribute('class', 'message');
+                    message.innerHTML = unescape((data.message).replace(/[<>]/g,''));
+                    time.setAttribute('id', 'time' + data.time);
+                    time.setAttribute('class', 'time');
+                    time.innerHTML = formattedTime;
+                    
+                    content.appendChild(nickname);
+                    content.appendChild(message);
+                    content.appendChild(time);
+                }
+                content.appendChild(message);
+                content.appendChild(time);
+                document.getElementById('content').appendChild(content);
+                window.scrollTo(0,document.getElementById('content').offsetHeight);
+            }
+            
+        </script>
+    </head>
+    <body>
+        <div id="content"></div>
+        <div id="inputs">
+            <input type="text" id="nickname" class="input" placeholder="Pseudo" />
+            <input type="text" id="message" class="input" disabled="disabled" placeholder="Message" />
+        </div>
+
+    </body>
+</html>
