@@ -85,12 +85,69 @@ app.router.get('/talk/:talkname', function (talkname) {
        //      }
         });
 
-    });
-});
 
 app.start(8080, function () {
     console.log('Application is now started on port 8080');
 });
+
+
+// Inclusion de Mongoose
+var mongoose = require('mongoose');
+
+// On se connecte à la base de données
+// N'oubliez pas de lancer ~/mongodb/bin/mongod dans un terminal !
+mongoose.connect('mongodb://localhost/bd_tchat', function(err) {
+  if (err) { throw err; }
+});
+
+// Création du schéma pour les commentaires
+var PageSchema = new mongoose.Schema({
+  page : { type : String, match: /^[a-zA-Z0-9-_]+$/ },
+  talkname :{type : String},
+	messages :{
+			author :{type : String},
+			message:{type : String}
+		  }
+});
+
+// on crée le model
+var PageModel = mongoose.model('page',PageSchema);
+
+//on récupère le model
+var PageModel = mongoose.model('page');
+
+//instance de model
+var maPage = new PageModel({talkname :'mon talkname'});
+maPage.messages = ({author :'auteur'},{message:'message'});
+/*maPage.messages = 'message';
+maPage.author = 'auteur';*/
+
+// On le sauvegarde dans MongoDB !
+maPage.save(function (err) {
+  if (err) { throw err; }
+ // console.log('page ajouté avec succès !');
+
+//TODO MT: requete mongo à utilser si necessaire -> voir autre TODO MT
+// PageModel.find(null, function (err, comms) {
+//   if (err) { throw err; }
+
+  // comms est un tableau de hash
+//console.log(comms);
+ /* var comm;
+  for (var i = 0, l = comms.length; i < l; i++) {
+    comm = comms[i];
+    console.log('------------------------------');
+    console.log('Auteur : ' + comm.author);
+    console.log('Message : ' + comm.message);
+    console.log('------------------------------');
+  }*/
+// });
+
+  // On se déconnecte de MongoDB maintenant
+  mongoose.connection.close();
+});
+
+
 
 io.sockets.on('connection', function(socket) {
 
@@ -174,3 +231,4 @@ io.sockets.on('connection', function(socket) {
   socket.on('disconnect', disconnect);
 
 });
+console.log('Live Chat App running at http://localhost:8080/');
