@@ -17,6 +17,8 @@
 
 // app.use(flatiron.plugins.http, {});
 
+
+
 var app = require('http').createServer(handler)
   , io = require('socket.io').listen(app)
   , fs = require('fs')
@@ -63,6 +65,67 @@ function handler (req, res) {
 //         //console.log(html);
 //         self.res.writeHead(200,{'Content-Type': 'text/html;charset=utf-8'});
 //         self.res.end(html,'utf-8');
+
+
+
+
+// Inclusion de Mongoose
+var mongoose = require('mongoose');
+
+// On se connecte à la base de données
+// N'oubliez pas de lancer ~/mongodb/bin/mongod dans un terminal !
+mongoose.connect('mongodb://localhost/bd_tchat', function(err) {
+  if (err) { throw err; }
+});
+
+// Création du schéma pour les commentaires
+var PageSchema = new mongoose.Schema({
+  page : { type : String, match: /^[a-zA-Z0-9-_]+$/ },
+  talkname :{type : String},
+	messages :{
+			author :{type : String},
+			message:{type : String}
+		  }
+});
+
+// on crée le model
+var PageModel = mongoose.model('page',PageSchema);
+
+//on récupère le model
+var PageModel = mongoose.model('page');
+
+//instance de model
+var maPage = new PageModel({talkname :'mon talkname'});
+maPage.messages = ({author :'auteur'},{message:'message'});
+/*maPage.messages = 'message';
+maPage.author = 'auteur';*/
+
+// On le sauvegarde dans MongoDB !
+maPage.save(function (err) {
+  if (err) { throw err; }
+ // console.log('page ajouté avec succès !');
+
+PageModel.find(null, function (err, comms) {
+  if (err) { throw err; }
+
+  // comms est un tableau de hash
+//console.log(comms);
+ /* var comm;
+  for (var i = 0, l = comms.length; i < l; i++) {
+    comm = comms[i];
+    console.log('------------------------------');
+    console.log('Auteur : ' + comm.author);
+    console.log('Message : ' + comm.message);
+    console.log('------------------------------');
+  }*/
+});
+
+
+
+  // On se déconnecte de MongoDB maintenant
+  mongoose.connection.close();
+});
+
 
 //     });
 // });
@@ -151,3 +214,4 @@ io.sockets.on('connection', function(socket) {
 
 
 });
+console.log('Live Chat App running at http://localhost:8080/');
