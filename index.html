@@ -20,7 +20,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Node.js chat</title>
+        <title>Chat</title>
 
         <style>
         * { font-family:tahoma; font-size:12px; padding:0px; margin:0px; }
@@ -51,6 +51,15 @@
                 createContent(2, data);
             });
             
+            socket.on('updateTalksList', function (data) {
+                createContent(3, data);
+            });
+
+            socket.on('talksContentReceive', function (data) {
+                //TODO LM : build content histo talks
+                createContent(4, data);
+            });
+
             var previousMessages = new Array();
             var idMessage = 0;
           
@@ -87,6 +96,18 @@
                         return;
                     }
                     idMessage = 0;
+                }, false);
+
+
+                //TODO LM: click on talk item
+                document.getElementById('itemTalkList').addEventListener('keydown', function(e) {
+                    //TODO LM: debug...
+                        //socket.emit('requestTalksContent', data);
+                    // console.log(e.keyCode);
+                    // if (e.keyCode == 13 && this.value.length > 0) {
+                    //     //
+                       
+                    // }
                 }, false);
             }
             
@@ -139,16 +160,30 @@
                     content.appendChild(message);
                     content.appendChild(time);
                 }
+
+                if(type == 3){
+                    // TODO LM build fresh list talks 
+                    //document.getElementById('talks');
+                }
+                if(type == 4{
+                    // TODO LM build histo talks
+                    //document.getElementById('content');
+                }    
+
                 content.appendChild(message);
                 content.appendChild(time);
                 document.getElementById('content').appendChild(content);
                 window.scrollTo(0,document.getElementById('content').offsetHeight);
+
             }
             
         </script>
     </head>
     <body>
+
+        <div id="talks"></div>
         <div id="content"></div>
+
         <div id="inputs">
             <input type="text" id="nickname" class="input" placeholder="Pseudo" />
             <input type="text" id="message" class="input" disabled="disabled" placeholder="Message" />
